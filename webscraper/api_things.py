@@ -25,10 +25,19 @@ def getReq(base_url,
         response = requests.get(request_string)
         num_rle = int(response.status_code==429)
         
-        while response.status_code==429 and rate_limit_override:
+        while response.status_code == 429 and \
+              rate_limit_override:
             sleep(int(response.headers['Retry-After']))
             num_rle += 1
             print(num_rle)
+            response = requests.get(request_string)
+
+        num_ise = 1
+        while response.status_code//100 == 5 and \
+              num_ise < 5:
+            print('Server error retrying in 30s')
+            sleep(30)
+            num_ise += 1
             response = requests.get(request_string)
             
         if success_log:

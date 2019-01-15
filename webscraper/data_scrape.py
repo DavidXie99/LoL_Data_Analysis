@@ -23,8 +23,7 @@ def getMatchlist(acc_id,
         key_is_expired = True
         return 0
     if response.status_code == 403 or \
-       response.status_code == 401 or \
-       response.status_code >= 500:
+       response.status_code == 401:
         key_is_expired = True
         return 0
     
