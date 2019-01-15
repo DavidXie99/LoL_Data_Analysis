@@ -95,15 +95,15 @@ def getMatchData(matches,
         d = getMatch(mch)
         if not d:
             return player_list
-        
-        with open('{path}{filename}.json'.format(path=s.data_path,filename=str(mch)), 'w') as outfile:
-            json.dump(d, outfile)
-        al = deque()
-        for p in d['participantIdentities']:
-            a_id = p['player']['accountId']
-            if a_id not in aseen and a_id not in seen_players:
-                al.append(a_id)
-        player_list += al
+        if 'status' not in d:
+            with open('{path}{filename}.json'.format(path=s.data_path,filename=str(mch)), 'w') as outfile:
+                json.dump(d, outfile)
+            al = deque()
+            for p in d['participantIdentities']:
+                a_id = p['player']['accountId']
+                if a_id not in aseen and a_id not in seen_players:
+                    al.append(a_id)
+            player_list += al
         
         ad(pl())
     return player_list
