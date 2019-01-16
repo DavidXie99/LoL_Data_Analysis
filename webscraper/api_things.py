@@ -35,8 +35,8 @@ def getReq(base_url,
         num_ise = 1
         while response.status_code//100 == 5 and \
               num_ise < 5:
-            print('Server error retrying in 30s')
-            sleep(30)
+            print('Server error retrying in {sec}s'.format(sec=5*num_ise))
+            sleep(5*num_ise)
             num_ise += 1
             response = requests.get(request_string)
             
