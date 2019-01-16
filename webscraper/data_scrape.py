@@ -114,12 +114,14 @@ if __name__ == '__main__':
     cur_accs = deque()
     cur_matches = deque()
     num_docs = 0
+    mode = 0
     with open('last_state.txt') as file0:
         a_app = cur_accs.append
         m_app = cur_matches.append
         read0 = file0.readline
         
         num_docs = int(read0().strip())
+        mode = int(read0().strip())
         nl1 = int(read0().strip())
         for a in range(nl1):
             a_app(read0().strip())
@@ -151,15 +153,20 @@ if __name__ == '__main__':
 
     # data collection and logic
     for i in range(2):
-        tml = totalMatchlist(cur_accs, mseen=nsm, aseen=nsp)
-        if key_is_expired:
-            break
-        cur_matches += tml
-
-        new_acc_list = getMatchData(cur_matches, mseen=nsm, aseen=nsp)
-        if key_is_expired:
-            break
-        cur_accs +=  new_acc_list
+        if not mode%2:
+            tml = totalMatchlist(cur_accs, mseen=nsm, aseen=nsp)
+            cur_matches += tml
+            if key_is_expired:
+                break
+            mode += 1
+        
+        if mode%2:
+            new_acc_list = getMatchData(cur_matches, mseen=nsm, aseen=nsp)
+            cur_accs +=  new_acc_list
+            if key_is_expired:
+                break
+            mode += 1
+        
         
     #print(seen_matches)
 
@@ -185,6 +192,8 @@ if __name__ == '__main__':
     with open('last_state.txt', 'w') as outfile0:
         out0 = outfile0.write
         out0(str(num_docs))
+        out0('\n')
+        out0(str(mode))
         out0('\n')
         na = len(cur_accs)
         out0(str(na))
