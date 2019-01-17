@@ -21,6 +21,7 @@ num_docs = -1
 with open('last_state.txt') as infile:
     read = infile.readline
     num_docs = int(read().strip())
+    num_mode = read().strip()
     num_accs = int(read().strip())
     for a in range(num_accs):
         app1(read().strip())
@@ -52,6 +53,7 @@ with open('last_state.txt', 'w') as outfile0:
     w = outfile0.write
 
     w(str(num_docs+1) + '\n')
+    w(str(num_mode) + '\n')
     w(str(len(accounts)) + '\n')
     for a in range(len(accounts)):
       w(accounts[a] + '\n')
