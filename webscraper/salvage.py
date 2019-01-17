@@ -62,13 +62,7 @@ with open('last_state.txt', 'w') as outfile0:
     for m in range(len(matches)):
       w(matches[m] + '\n')
 
-"""
-with open('last_state.txt','w') as sfile:
-    w = sfile.write
-    
 
-"""
-    
     
     
     
