@@ -27,9 +27,9 @@ def getReq(base_url,
         
         while response.status_code == 429 and \
               rate_limit_override:
+            print('#RLE:',num_rle, '\t Retrying in',response.headers['Retry-After'])
             sleep(int(response.headers['Retry-After']))
             num_rle += 1
-            print(num_rle)
             response = requests.get(request_string)
 
         num_ise = 1
@@ -41,11 +41,10 @@ def getReq(base_url,
             response = requests.get(request_string)
             
         if success_log:
-            print('API:',api_url,
-                  #' Path value:',path_param,
-                  ' Response time:',round(time()-start,5),
-                  '\t Response code:',response.status_code,
-                  ' #RLE:',num_rle)
+            print('API:',api_url[4:],
+                  'param:',path_param,
+                  '\tresptime:',round(time()-start,5),
+                  '\tsc:',response.status_code)
         return response
     
     except requests.exceptions.RequestException as e:
