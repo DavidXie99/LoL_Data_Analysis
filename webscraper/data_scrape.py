@@ -72,7 +72,7 @@ def totalMatchlist(accounts,
     for a in range(n_accs):
         acc = accounts[0]
         for q in game_q:
-            ml = getMatchlist(acc, mseen, {'queue':q})
+            ml = getMatchlist(acc, mseen, {'queue':q, 'endIndex': '10'})
             if not ml:
                 if ml == 0:
                     return totalMatches
