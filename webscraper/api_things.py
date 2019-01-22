@@ -30,7 +30,7 @@ def getReq(base_url,
             try:
                 print('#RLE:',num_rle, '\t Retrying in',response.headers['Retry-After'])
                 sleep(int(response.headers['Retry-After']))
-            except e:
+            except Exception as e:
                 print('Error occured in 429 handling: ',e)
                 sleep(75)
             num_rle += 1
