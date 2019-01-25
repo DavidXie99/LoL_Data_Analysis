@@ -21,11 +21,12 @@ def bans(obj,
     g_id = obj['gameId']
     for t in obj['teams']:
         t_id = t['teamId']
-        query_array += [qb.insert_query(t['bans'],
-                                       sch,
-                                       'bans',
-                                       add_key={'game_id':g_id, 'team_id':t_id},
-                                       t=list)]
+        if len(t['bans']):
+            query_array += [qb.insert_query(t['bans'],
+                                            sch,
+                                            'bans',
+                                            add_key={'game_id':g_id, 'team_id':t_id},
+                                            t=list)]
     return query_array
 
 def participants(obj,
