@@ -96,7 +96,7 @@ def getMatchData(matches,
         if not d:
             return player_list
         if 'status' not in d:
-            with open('{path}{filename}.json'.format(path=s.data_path,filename=str(mch)), 'w') as outfile:
+            with open('{path}{filename}.json'.format(path=s.raw_data_path,filename=str(mch)), 'w') as outfile:
                 json.dump(d, outfile)
             al = deque()
             for p in d['participantIdentities']:
