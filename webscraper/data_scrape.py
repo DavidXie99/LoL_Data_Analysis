@@ -6,6 +6,8 @@ import json
 import config as c
 import api_things as at
 import secrets as s
+import db_process as dp
+import db_config as dc
 
 key_is_expired = False
 
@@ -98,6 +100,8 @@ def getMatchData(matches,
         if 'status' not in d:
             with open('{path}{filename}.json'.format(path=s.raw_data_path,filename=str(mch)), 'w') as outfile:
                 json.dump(d, outfile)
+            dp.obj_parse(d, dc.matches_schem, str(mch))
+            
             al = deque()
             for p in d['participantIdentities']:
                 a_id = p['player']['accountId']
@@ -137,6 +141,14 @@ if __name__ == '__main__':
     nsm = set()
     nsp = set()
 
+    dp.init_conn(s.data_path + s.db_name)
+    dp.init_tables(dc.matches_schem)
+    
+    for m in dp.select_ids('matches', ['game_id']):
+        add1(m[0])
+    for a in dp.select_ids('participant_ids', ['account_id']):
+        add2(a[0])
+    """
     for d in range(num_docs):
         with open('seen_matches{num}.txt'.format(num=d)) as file1:
             read1 = file1.readline
@@ -149,7 +161,7 @@ if __name__ == '__main__':
             num_lines = int(read2().strip())
             for l in range(num_lines):
                 add2(read2().strip())
-            
+    """
 
     # data collection and logic
     for i in range(2):
@@ -166,11 +178,9 @@ if __name__ == '__main__':
             if key_is_expired:
                 break
             mode += 1
-        
-        
-    #print(seen_matches)
 
-
+    dp.cleanup()
+            
     # save progress data
     with open('seen_matches{num}.txt'.format(num=num_docs), 'w') as outfile1:
         out1 = outfile1.write
