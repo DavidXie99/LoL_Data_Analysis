@@ -117,6 +117,52 @@ def create_query(table_schem):
                                                                       schem=','.join(sch))
     return query
                              
+def select_query(table_name,
+                 columns,
+                 join=dict(),
+                 distinct=False,
+                 where=dict(),
+                 group=[],
+                 having=dict(),
+                 order=dict(),
+                 limit=0):
+    join_statements = []
+    for table in join:
+        join_cols = ' and '.join('{t1}.{col1} = {val}'.format(t1=table,
+                                                              col1=c['col1'],
+                                                              val=c['t2']+'.'+c['col2'] if len(c['t2']) else c['col2'])\
+                                 for c in join[table]['fields'])
+        join_statement = '{j_type} JOIN {t} ON {cond}'.format(j_type=join[table]['join_type'],
+                                                              t=table,
+                                                              cond=join_cols)
+    ## TODO Where statement logic
+    where_statements = []
 
+    ## TODO Group By statement logic
+    group_bys = []
 
+    ## TODO Having statement logic
+    having_statements = []
+
+    ## TODO Order By statement logic
+    order_bys = []
+
+    query = ''' SELECT {dist} {cols}
+                FROM {t_name}
+                {joins}
+                {wheres}
+                {groups}
+                {havings}
+                {orders}
+                {lim}
+            '''.format(dist='DISTINCT' if distinct else '',
+                       cols=', '.join(columns),
+                       t_name=table_name,
+                       joins='\n'.join(join_statements) if len(join_statements) else '',
+                       wheres='WHERE '+' AND\n'.join(where_statements) if len(where_statements) else '',
+                       groups='GROUP BY '+', '.join(group_bys) if len(group_bys) else '',
+                       havings='HAVING '+' AND\n'.join(having_statements) if len(having_statements) else '',
+                       orders='ORDER BY '+', '.join(order_bys) if len(order_bys) else '',
+                       lim='LIMIT '+str(limit) if limit else '')
+    return query
 
