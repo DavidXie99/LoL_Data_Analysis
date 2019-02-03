@@ -41,8 +41,8 @@ with open('seen_matches{num}.txt'.format(num=str(num_docs)),'w') as outfile1:
 
     num_r = len(seen_record)
     w(str(num_r) + '\n')
-    for m in seen_record:
-        w(m + '\n')
+    w('\n'.join(seen_record))
+    w('\n')
 
 with open('seen_players{num}.txt'.format(num=str(num_docs)),'w') as outfile2:
     w = outfile2.write
@@ -55,12 +55,12 @@ with open('last_state.txt', 'w') as outfile0:
     w(str(num_docs+1) + '\n')
     w(str(num_mode) + '\n')
     w(str(len(accounts)) + '\n')
-    for a in range(len(accounts)):
-      w(accounts[a] + '\n')
+    w('\n'.join(accounts))
+    w('\n')
 
     w(str(len(matches)) + '\n')
-    for m in range(len(matches)):
-      w(matches[m] + '\n')
+    w('\n'.join(matches))
+    w('\n')
 
 
     

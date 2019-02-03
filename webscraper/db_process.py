@@ -84,7 +84,7 @@ if __name__ == '__main__':
     seen_matches = set()
     ad1 = seen_matches.add
     for row in sql_rows:
-        ad1(str(row[0]) + '.json')
+        ad1(str(row) + '.json')
 
     files = []
     for r,d,f in walk(s.raw_data_path):
