@@ -72,14 +72,16 @@ def totalMatchlist(accounts,
     totalMatches = deque()
     n_accs = len(accounts)
     for a in range(n_accs):
-        acc = accounts[0]
-        for q in game_q:
-            ml = getMatchlist(acc, mseen, {'queue':q, 'endIndex': '10'})
-            if not ml:
-                if ml == 0:
-                    return totalMatches
-            totalMatches += ml
-        ad(pl())
+        acc = pl()
+        if acc not in seen_players:
+            if acc not in aseen:
+                for q in game_q:
+                    ml = getMatchlist(acc, mseen, {'queue':q, 'endIndex': '10'})
+                    if not ml:
+                        if ml == 0:
+                            return totalMatches
+                    totalMatches += ml
+                ad(acc)
     return totalMatches
 
 # dumps match data and returns player lists
@@ -205,7 +207,7 @@ if __name__ == '__main__':
         na = len(cur_accs)
         out0(str(na))
         out0('\n')
-        out0('\n'.join(curr_accs))
+        out0('\n'.join(cur_accs))
         out0('\n')
 
         nm = len(cur_matches)
