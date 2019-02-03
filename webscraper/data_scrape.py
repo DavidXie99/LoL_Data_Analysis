@@ -127,28 +127,25 @@ if __name__ == '__main__':
         
         num_docs = int(read0().strip())
         mode = int(read0().strip())
-        nl1 = int(read0().strip())
-        for a in range(nl1):
-            a_app(read0().strip())
-        nl2 = int(read0().strip())
-        for m in range(nl2):
-            m_app(int(read0().strip()))
         
-    seen_matches = set()
-    add1 = seen_matches.add
-    seen_players = set()
-    add2 = seen_players.add
+        nl1 = int(read0().strip())
+        cur_accs = deque(read0().strip() for a in range(nl1))
+        
+        nl2 = int(read0().strip())
+        cur_matches = deque(read0().strip() for a in range(nl2))
+
+    dp.init_conn(s.data_path + s.db_name)
+    dp.init_tables(dc.matches_schem)
+
+    dp.select_ids('matches', ['game_id'])
+    seen_matches = {row[0] for row in dp.c}
+
+    dp.select_ids('participant_ids', ['account_id'])
+    seen_players = {row[0] for row in dp.c}
 
     nsm = set()
     nsp = set()
 
-    dp.init_conn(s.data_path + s.db_name)
-    dp.init_tables(dc.matches_schem)
-    
-    for m in dp.select_ids('matches', ['game_id']):
-        add1(m[0])
-    for a in dp.select_ids('participant_ids', ['account_id']):
-        add2(a[0])
     """
     for d in range(num_docs):
         with open('seen_matches{num}.txt'.format(num=d)) as file1:
@@ -187,17 +184,15 @@ if __name__ == '__main__':
         out1 = outfile1.write
         out1(str(len(nsm)))
         out1('\n')
-        for match in nsm:
-            out1(str(match))
-            out1('\n')
+        out1('\n'.join(nsm))
+        out1('\n')
 
     with open('seen_players{num}.txt'.format(num=num_docs), 'w') as outfile2:
         out2 = outfile2.write
         out2(str(len(nsp)))
         out2('\n')
-        for player in nsp:
-            out2(player)
-            out2('\n')
+        out2('\n'.join(nsp))
+        out2('\n')
         
     num_docs += 1
     with open('last_state.txt', 'w') as outfile0:
@@ -206,19 +201,18 @@ if __name__ == '__main__':
         out0('\n')
         out0(str(mode))
         out0('\n')
+        
         na = len(cur_accs)
         out0(str(na))
         out0('\n')
-        for a in range(na):
-            out0(cur_accs[a])
-            out0('\n')
+        out0('\n'.join(curr_accs))
+        out0('\n')
 
         nm = len(cur_matches)
         out0(str(nm))
         out0('\n')
-        for a in range(nm):
-            out0(str(cur_matches[a]))
-            out0('\n')
+        out0('\n'.join(str(m) for m in cur_matches))
+        out0('\n')
 
     
     

@@ -62,7 +62,7 @@ def select_ids(table_name,
     c.execute(qb.select_query(table_name,
                               ids,
                               distinct=distinct))
-    return c.fetchall()
+    return
 
 def cleanup():
     execute()
@@ -78,7 +78,8 @@ if __name__ == '__main__':
     num_processed = 0
     init_conn(s.data_path + s.db_name)
     init_tables(dc.matches_schem)
-    sql_rows = select_ids('matches', ['game_id'])
+    select_ids('matches', ['game_id'])
+    sql_rows = {row[0] for row in c}
 
     seen_matches = set()
     ad1 = seen_matches.add
