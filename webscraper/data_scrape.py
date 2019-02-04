@@ -93,6 +93,7 @@ def getMatchData(matches,
 
     player_list = deque()
     n_matches = len(matches)
+    num_reqs = 1
     for m in range(n_matches):
         mch = pl()
         if mch not in seen_matches:
@@ -111,7 +112,9 @@ def getMatchData(matches,
                         if a_id not in aseen and a_id not in seen_players:
                             al.append(a_id)
                     player_list += al
-            
+                if num_reqs%100 == 0:
+                    dp.execute()
+                num_reqs += 1
                 ad(mch)
     return player_list
 

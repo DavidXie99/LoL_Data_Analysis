@@ -14,13 +14,16 @@ def init_conn(db_name):
 
 def execute():
     global sql_transacts
+    ct = 0
     for s in sql_transacts:
         try:
+            ct += 1
             c.execute(s)
         except:
             print('Error executing sql:\n',s)
     conn.commit()
     sql_transacts = []
+    print('# statements successfully executed: ',ct)
 
 def sql_bldr(sql_string,
              exe=False):
