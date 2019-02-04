@@ -137,7 +137,7 @@ if __name__ == '__main__':
         cur_accs = deque(read0().strip() for a in range(nl1))
         
         nl2 = int(read0().strip())
-        cur_matches = deque(read0().strip() for a in range(nl2))
+        cur_matches = deque(int(read0().strip()) for a in range(nl2))
 
     dp.init_conn(s.data_path + s.db_name)
     dp.init_tables(dc.matches_schem)
@@ -189,7 +189,7 @@ if __name__ == '__main__':
         out1 = outfile1.write
         out1(str(len(nsm)))
         out1('\n')
-        out1('\n'.join(nsm))
+        out1('\n'.join(str(m) for m in nsm))
         out1('\n')
 
     with open('seen_players{num}.txt'.format(num=num_docs), 'w') as outfile2:
