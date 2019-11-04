@@ -1,5 +1,4 @@
 import requests
-from time import time, sleep
 from collections import deque
 import json
 
@@ -8,8 +7,12 @@ import api_things as at
 import secrets as s
 import db_process as dp
 import db_config as dc
+import helpers as hp
 
 key_is_expired = False
+latest_match = 2695191124
+killer = hp.GracefulKiller()
+
 
 # return list of matches
 def getMatchlist(acc_id,
@@ -21,7 +24,7 @@ def getMatchlist(acc_id,
                          {**c.def_q_params, **extra_params},
                          rate_limit_override=True)
     global key_is_expired
-    if response == None:
+    if response is None:
         key_is_expired = True
         return 0
     if response.status_code == 403 or \
@@ -34,7 +37,6 @@ def getMatchlist(acc_id,
     if response.status_code//100 != 2:
         return matches
     data = response.json()
-    
 
     for match in data['matches']:
         if match['gameId'] not in seen and \
@@ -42,15 +44,15 @@ def getMatchlist(acc_id,
             matches.append(match['gameId']) 
     return matches
 
+
 # return data & list of accounts                 
 def getMatch(match_id):
     response = at.getReq(c.base_url,
                          c.MATCH,
                          match_id,
-                         c.def_q_params,
-                         rate_limit_override=True)
+                         c.def_q_params)
     global key_is_expired
-    if response == None:
+    if response is None:
         key_is_expired = True
         return 0
     if response.status_code == 403 or \
@@ -60,6 +62,7 @@ def getMatch(match_id):
         return 0
     data = response.json()
     return data
+
 
 # return all important matches
 def totalMatchlist(accounts,
@@ -76,13 +79,19 @@ def totalMatchlist(accounts,
         if acc not in seen_players:
             if acc not in aseen:
                 for q in game_q:
-                    ml = getMatchlist(acc, mseen, {'queue':q, 'endIndex': '10'})
+                    ml = getMatchlist(acc, mseen, {'queue': q, 'endIndex': '10'})
                     if not ml:
                         if ml == 0:
                             return totalMatches
                     totalMatches += ml
                 ad(acc)
+
+                if killer.kill_now:
+                    global key_is_expired
+                    key_is_expired = True
+                    return totalMatches
     return totalMatches
+
 
 # dumps match data and returns player lists
 def getMatchData(matches,
@@ -96,26 +105,35 @@ def getMatchData(matches,
     num_reqs = 1
     for m in range(n_matches):
         mch = pl()
-        if mch not in seen_matches:
-            if mch not in mseen:
-                d = getMatch(mch)
-                if not d:
-                    return player_list
-                if 'status' not in d:
-                    with open('{path}{filename}.json'.format(path=s.raw_data_path,filename=str(mch)), 'w') as outfile:
-                        json.dump(d, outfile)
-                    dp.obj_parse(d, dc.matches_schem, str(mch))
-                    
-                    al = deque()
-                    for p in d['participantIdentities']:
-                        a_id = p['player']['accountId']
-                        if a_id not in aseen and a_id not in seen_players:
-                            al.append(a_id)
-                    player_list += al
-                if num_reqs%100 == 0:
-                    dp.execute()
-                num_reqs += 1
-                ad(mch)
+        if mch not in seen_matches and mch not in mseen and mch > latest_match:
+            match_data = getMatch(mch)
+            if not match_data:
+                return player_list
+            if 'status' not in match_data:
+                with open('{path}{filename}.json'.format(path=s.raw_data_path,filename=str(mch)), 'w') as outfile:
+                    json.dump(match_data, outfile)
+
+                dp.obj_parse(match_data, dc.matches_schem, str(mch))
+
+                al = deque()
+                for p in match_data['participantIdentities']:
+                    a_id = p['player']['accountId']
+                    if a_id not in aseen and (a_id not in seen_players or seen_players[a_id] < mch):
+                        al.append(a_id)
+                        if a_id in seen_players:
+                            del seen_players[a_id]
+                player_list += al
+
+            ad(mch)
+            if num_reqs % 100 == 0:
+                dp.execute()
+            if killer.kill_now:
+                dp.execute()
+                global key_is_expired
+                key_is_expired = True
+                return player_list
+            num_reqs += 1
+
     return player_list
 
 
@@ -125,6 +143,7 @@ if __name__ == '__main__':
     cur_matches = deque()
     num_docs = 0
     mode = 0
+    print("Loading last state...")
     with open('last_state.txt') as file0:
         a_app = cur_accs.append
         m_app = cur_matches.append
@@ -139,45 +158,33 @@ if __name__ == '__main__':
         nl2 = int(read0().strip())
         cur_matches = deque(int(read0().strip()) for a in range(nl2))
 
+    print("Connecting to db")
     dp.init_conn(s.data_path + s.db_name)
     dp.init_tables(dc.matches_schem)
 
+    print("Grabbing previous match ids")
     dp.select_ids('matches', ['game_id'])
     seen_matches = {row[0] for row in dp.c}
 
-    dp.select_ids('participant_ids', ['account_id'])
-    seen_players = {row[0] for row in dp.c}
+    print("Grabbing players")
+    dp.select_ids('participant_ids', ['account_id', 'max(game_id)'], wheres=['game_id > 2695191124'], groups=['1'])
+    seen_players = {row[0]: row[1] for row in dp.c}
 
     nsm = set()
     nsp = set()
 
-    """
-    for d in range(num_docs):
-        with open('seen_matches{num}.txt'.format(num=d)) as file1:
-            read1 = file1.readline
-            num_lines = int(read1().strip())
-            for l in range(num_lines):
-                add1(int(read1().strip()))
-
-        with open('seen_players{num}.txt'.format(num=d)) as file2:
-            read2 = file2.readline
-            num_lines = int(read2().strip())
-            for l in range(num_lines):
-                add2(read2().strip())
-    """
-
     # data collection and logic
-    for i in range(2):
-        if not mode%2:
+    for i in range(1):
+        if not mode % 2:
             tml = totalMatchlist(cur_accs, mseen=nsm, aseen=nsp)
             cur_matches += tml
             if key_is_expired:
                 break
             mode += 1
         
-        if mode%2:
+        else:
             new_acc_list = getMatchData(cur_matches, mseen=nsm, aseen=nsp)
-            cur_accs +=  new_acc_list
+            cur_accs += new_acc_list
             if key_is_expired:
                 break
             mode += 1
@@ -185,14 +192,14 @@ if __name__ == '__main__':
     dp.cleanup()
             
     # save progress data
-    with open('seen_matches{num}.txt'.format(num=num_docs), 'w') as outfile1:
+    with open('seen_data/seen_matches{num}.txt'.format(num=num_docs), 'w') as outfile1:
         out1 = outfile1.write
         out1(str(len(nsm)))
         out1('\n')
         out1('\n'.join(str(m) for m in nsm))
         out1('\n')
 
-    with open('seen_players{num}.txt'.format(num=num_docs), 'w') as outfile2:
+    with open('seen_data/seen_players{num}.txt'.format(num=num_docs), 'w') as outfile2:
         out2 = outfile2.write
         out2(str(len(nsp)))
         out2('\n')
@@ -218,6 +225,3 @@ if __name__ == '__main__':
         out0('\n')
         out0('\n'.join(str(m) for m in cur_matches))
         out0('\n')
-
-    
-    

@@ -1,5 +1,5 @@
 import sqlite3
-from tinydb import TinyDB, Query
+#from tinydb import TinyDB, Query
 import db_config as dc
 import query_builder as qb
 
@@ -7,10 +7,12 @@ sql_transacts = []
 conn = None
 c = None
 
+
 def init_conn(db_name):
     global conn, c
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
+
 
 def execute():
     global sql_transacts
@@ -39,10 +41,12 @@ def sql_bldr(sql_string,
     if len(sql_transacts) >= 10000:
         execute()
 
+
 def init_tables(db_schema):
     for table_schem in db_schema:
         c.execute(qb.create_query(table_schem))
     conn.commit()
+
 
 def obj_parse(data,
               obj_schema,
@@ -51,21 +55,27 @@ def obj_parse(data,
     query_array = []
     try:
         for table_schema in obj_schema:
-            query_array += table_schema['func'](data,table_schema['sch'])
+            query_array += table_schema['func'](data, table_schema['sch'])
     except:
-        print('Exception occurred generating SQL for:',file_name)
+        print('Exception occurred generating SQL for:', file_name)
         return []
     if to_execute:
         sql_bldr(query_array)
     return query_array
 
+
 def select_ids(table_name,
                ids,
+               wheres=[],
+               groups=[],
                distinct=True):
     c.execute(qb.select_query(table_name,
                               ids,
+                              where=wheres,
+                              group=groups,
                               distinct=distinct))
     return
+
 
 def cleanup():
     execute()

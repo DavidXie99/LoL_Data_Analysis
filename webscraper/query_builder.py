@@ -7,6 +7,7 @@ py_to_lite = {int : 'INTEGER',
               float : 'REAL',
               bool : 'INTEGER'}
 
+
 def camelToSnake(string):
     #return string
     new_string = ''
@@ -18,12 +19,14 @@ def camelToSnake(string):
             new_string += c
     return new_string
 
+
 def boolToInt(val):
     if type(val) == bool:
         return int(val)
     if type(val) == str:
         return "'"+val+"'"
     return val
+
 
 def insert_query(obj,
                  schema,
@@ -91,6 +94,7 @@ def insert_query(obj,
         return query
     return None
 
+
 def create_query(table_schem):
     sch = []
     ap1 = sch.append
@@ -116,12 +120,13 @@ def create_query(table_schem):
     query = '''CREATE TABLE IF NOT EXISTS {table} ({schem})'''.format(table=table_schem['name'],
                                                                       schem=','.join(sch))
     return query
-                             
+
+
 def select_query(table_name,
                  columns,
                  join=dict(),
                  distinct=False,
-                 where=dict(),
+                 where=[],
                  group=[],
                  having=dict(),
                  order=dict(),
@@ -132,14 +137,11 @@ def select_query(table_name,
                                                               col1=c['col1'],
                                                               val=c['t2']+'.'+c['col2'] if len(c['t2']) else c['col2'])\
                                  for c in join[table]['fields'])
-        join_statement = '{j_type} JOIN {t} ON {cond}'.format(j_type=join[table]['join_type'],
-                                                              t=table,
-                                                              cond=join_cols)
+        join_statements += ['{j_type} JOIN {t} ON {cond}'.format(j_type=join[table]['join_type'],
+                                                                 t=table,
+                                                                 cond=join_cols)]
     ## TODO Where statement logic
-    where_statements = []
-
-    ## TODO Group By statement logic
-    group_bys = []
+    where_statements = where  # temporary solution
 
     ## TODO Having statement logic
     having_statements = []
@@ -160,7 +162,7 @@ def select_query(table_name,
                        t_name=table_name,
                        joins='\n'.join(join_statements) if len(join_statements) else '',
                        wheres='WHERE '+' AND\n'.join(where_statements) if len(where_statements) else '',
-                       groups='GROUP BY '+', '.join(group_bys) if len(group_bys) else '',
+                       groups='GROUP BY '+', '.join(group) if len(group) else '',
                        havings='HAVING '+' AND\n'.join(having_statements) if len(having_statements) else '',
                        orders='ORDER BY '+', '.join(order_bys) if len(order_bys) else '',
                        lim='LIMIT '+str(limit) if limit else '')
