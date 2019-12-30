@@ -1,5 +1,4 @@
 import sqlite3
-#from tinydb import TinyDB, Query
 import db_config as dc
 import query_builder as qb
 
@@ -26,6 +25,7 @@ def execute():
     conn.commit()
     sql_transacts = []
     print('# statements successfully executed: ',ct)
+
 
 def sql_bldr(sql_string,
              exe=False):
@@ -68,11 +68,13 @@ def select_ids(table_name,
                ids,
                wheres=[],
                groups=[],
+               havings=[],
                distinct=True):
     c.execute(qb.select_query(table_name,
                               ids,
                               where=wheres,
                               group=groups,
+                              having=havings,
                               distinct=distinct))
     return
 
@@ -102,7 +104,6 @@ if __name__ == '__main__':
     files = []
     for r,d,f in walk(s.raw_data_path):
         files += [fl for fl in f if (fl not in seen_matches)]
-    
         
     for jf in files:
         with open(s.raw_data_path + jf) as infile:
@@ -114,5 +115,3 @@ if __name__ == '__main__':
             print('Matches processed',num_processed)
 
     cleanup()
-    
-    

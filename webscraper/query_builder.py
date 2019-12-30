@@ -128,7 +128,7 @@ def select_query(table_name,
                  distinct=False,
                  where=[],
                  group=[],
-                 having=dict(),
+                 having=[],
                  order=dict(),
                  limit=0):
     join_statements = []
@@ -144,7 +144,7 @@ def select_query(table_name,
     where_statements = where  # temporary solution
 
     ## TODO Having statement logic
-    having_statements = []
+    having_statements = having  # temporary solution
 
     ## TODO Order By statement logic
     order_bys = []

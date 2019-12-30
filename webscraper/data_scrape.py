@@ -1,4 +1,3 @@
-import requests
 from collections import deque
 import json
 
@@ -10,8 +9,9 @@ import db_config as dc
 import helpers as hp
 
 key_is_expired = False
-latest_match = 2695191124
+latest_match = 0
 killer = hp.GracefulKiller()
+get_accounts = True
 
 
 # return list of matches
@@ -21,8 +21,7 @@ def getMatchlist(acc_id,
     response = at.getReq(c.base_url,
                          c.MATCHLIST,
                          acc_id,
-                         {**c.def_q_params, **extra_params},
-                         rate_limit_override=True)
+                         {**c.def_q_params, **extra_params})
     global key_is_expired
     if response is None:
         key_is_expired = True
@@ -66,7 +65,7 @@ def getMatch(match_id):
 
 # return all important matches
 def totalMatchlist(accounts,
-                   game_q={400, 420, 440},
+                   game_q={420},
                    mseen=set(),
                    aseen=set()):
     pl = accounts.popleft
@@ -110,19 +109,20 @@ def getMatchData(matches,
             if not match_data:
                 return player_list
             if 'status' not in match_data:
-                with open('{path}{filename}.json'.format(path=s.raw_data_path,filename=str(mch)), 'w') as outfile:
+                with open('{path}{filename}.json'.format(path=s.raw_data_path, filename=str(mch)), 'w') as outfile:
                     json.dump(match_data, outfile)
 
                 dp.obj_parse(match_data, dc.matches_schem, str(mch))
 
-                al = deque()
-                for p in match_data['participantIdentities']:
-                    a_id = p['player']['accountId']
-                    if a_id not in aseen and (a_id not in seen_players or seen_players[a_id] < mch):
-                        al.append(a_id)
-                        if a_id in seen_players:
-                            del seen_players[a_id]
-                player_list += al
+                if get_accounts:
+                    al = deque()
+                    for p in match_data['participantIdentities']:
+                        a_id = p['player']['accountId']
+                        if a_id not in aseen and (a_id not in seen_players or seen_players[a_id] < mch):
+                            al.append(a_id)
+                            if a_id in seen_players:
+                                del seen_players[a_id]
+                    player_list += al
 
             ad(mch)
             if num_reqs % 100 == 0:
@@ -166,15 +166,26 @@ if __name__ == '__main__':
     dp.select_ids('matches', ['game_id'])
     seen_matches = {row[0] for row in dp.c}
 
-    print("Grabbing players")
-    dp.select_ids('participant_ids', ['account_id', 'max(game_id)'], wheres=['game_id > 2695191124'], groups=['1'])
-    seen_players = {row[0]: row[1] for row in dp.c}
+    print("Grabbing latest_match")
+    dp.select_ids('matches', ['min(game_id)'], wheres=['season_id = 12'])
+    for row in dp.c:
+        latest_match = row[0]
+    print("Latest_match: ", latest_match)
+
+    if get_accounts:
+        print("Grabbing players")
+        dp.select_ids('participant_ids',
+                      ['account_id', 'max(game_id)'],
+                      wheres=['game_id > {l_match}'.format(l_match=str(latest_match))],
+                      groups=['1'],
+                      havings=["count(game_id) > 99"])
+        seen_players = {row[0]: row[1] for row in dp.c}
 
     nsm = set()
     nsp = set()
 
     # data collection and logic
-    for i in range(1):
+    for i in range(2):
         if not mode % 2:
             tml = totalMatchlist(cur_accs, mseen=nsm, aseen=nsp)
             cur_matches += tml
@@ -192,20 +203,6 @@ if __name__ == '__main__':
     dp.cleanup()
             
     # save progress data
-    with open('seen_data/seen_matches{num}.txt'.format(num=num_docs), 'w') as outfile1:
-        out1 = outfile1.write
-        out1(str(len(nsm)))
-        out1('\n')
-        out1('\n'.join(str(m) for m in nsm))
-        out1('\n')
-
-    with open('seen_data/seen_players{num}.txt'.format(num=num_docs), 'w') as outfile2:
-        out2 = outfile2.write
-        out2(str(len(nsp)))
-        out2('\n')
-        out2('\n'.join(nsp))
-        out2('\n')
-        
     num_docs += 1
     with open('last_state.txt', 'w') as outfile0:
         out0 = outfile0.write
